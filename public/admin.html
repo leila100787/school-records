@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="kz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мұғалім панелі / Панель учителя</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#3182ce">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Рекордтар">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { background: #f0f4f8; }
+
+    .admin-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .admin-header {
+      background: white;
+      padding: 16px 24px;
+      border-radius: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+      margin-top: 60px;
+    }
+
+    .admin-header h1 {
+      font-size: 20px;
+      margin: 0;
+      text-align: left;
+    }
+
+    .admin-header .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: #4a5568;
+    }
+
+    .btn-logout {
+      background: #e53e3e;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn-logout:hover { background: #c53030; }
+
+    .admin-nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      background: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: #4a5568;
+      transition: all 0.2s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .nav-btn:hover { background: #edf2f7; }
+    .nav-btn.active { background: #3182ce; color: white; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .stat-card .label {
+      font-size: 13px;
+      color: #718096;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .stat-card .value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #3182ce;
+    }
+
+    .stat-card.warning .value { color: #d69e2e; }
+    .stat-card.success .value { color: #38a169; }
+    .stat-card.danger .value { color: #e53e3e; }
+
+    .tab-content {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      display: none;
+    }
+
+    .tab-content.active { display: block; }
+
+    .add-category-form {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: #f7fafc;
+      border-radius: 12px;
+    }
+
+    .add-category-form input,
+    .add-category-form select {
+      padding: 10px 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .add-category-form button {
+      padding: 10px 20px;
+      background: #38a169;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .add-category-form button:hover { background: #2f855a; }
+
+    .table-wrapper { overflow-x: auto; }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th {
+      background: #edf2f7;
+      padding: 12px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4a5568;
+      white-space: nowrap;
+    }
+
+    .data-table td {
+      padding: 12px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 14px;
+    }
+
+    .data-table tr:hover { background: #f7fafc; }
+
+    .btn-action {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      margin-right: 4px;
+    }
+
+    .btn-approve { background: #38a169; color: white; }
+    .btn-approve:hover { background: #2f855a; }
+    .btn-reject { background: #e53e3e; color: white; }
+    .btn-reject:hover { background: #c53030; }
+    .btn-view {
+      background: #3182ce;
+      color: white;
+      text-decoration: none;
+      display: inline-block;
+      padding: 6px 12px;
+    }
+    .btn-view:hover { background: #2c5282; }
+
+    .video-link {
+      color: #3182ce;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 18px;
+    }
+    .video-link:hover { transform: scale(1.2); }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #a0aec0;
+    }
+
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+    .inner-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .inner-tab {
+      background: #f7fafc;
+      border: 2px solid #e2e8f0;
+      padding: 10px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: #4a5568;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .inner-tab:hover {
+      background: #edf2f7;
+      border-color: #cbd5e0;
+    }
+
+    .inner-tab.active {
+      background: #3182ce;
+      color: white;
+      border-color: #3182ce;
+    }
+
+    .inner-tab .count {
+      background: rgba(255,255,255,0.3);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+
+    .inner-tab:not(.active) .count {
+      background: #3182ce;
+      color: white;
+    }
+
+    .inner-content { display: none; }
+
+    .inner-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-box h2 {
+      margin: 0 0 16px 0;
+      font-size: 22px;
+    }
+
+    .info-row {
+      padding: 10px 0;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 14px;
+    }
+
+    .info-row:last-of-type { border-bottom: none; }
+    .info-row strong { color: #4a5568; }
+
+    .password-box {
+      background: #fefcbf;
+      padding: 16px;
+      border-radius: 10px;
+      margin: 16px 0;
+      border: 2px solid #f6e05e;
+    }
+
+    .password-box h3 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+      color: #975a16;
+    }
+
+    .password-box input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+
+    .password-box input:focus {
+      outline: none;
+      border-color: #3182ce;
+    }
+
+    .btn-full {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    .btn-green { background: #38a169; color: white; margin-top: 8px; }
+    .btn-green:hover { background: #2f855a; }
+
+    .btn-gray { background: #e2e8f0; color: #4a5568; margin-top: 8px; }
+    .btn-gray:hover { background: #cbd5e0; }
+
+    @media (max-width: 768px) {
+      .add-category-form { grid-template-columns: 1fr; }
+      .admin-header {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+      }
+      .admin-header h1 { text-align: center; }
+      .admin-nav { justify-content: center; }
+      .inner-tabs { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="lang-switcher">
+    <button class="lang-btn" data-lang-btn="kz" onclick="setLang('kz')" title="Қазақша">🇰🇿</button>
+    <button class="lang-btn" data-lang-btn="ru" onclick="setLang('ru')" title="Русский">🇷🇺</button>
+  </div>
+
+  <div class="admin-container">
+
+    <div class="admin-header">
+      <h1 data-i18n="admin_panel">Мұғалім панелі</h1>
+      <div class="user-info">
+        <span id="adminName"></span>
+        <button class="btn-logout" onclick="logout()">🚪 <span data-i18n="logout">Шығу</span></button>
+      </div>
+    </div>
+
+    <div id="alert" class="alert"></div>
+
+    <div class="admin-nav">
+      <button class="nav-btn active" onclick="showTab('dashboard', event)">🏠 <span data-i18n="dashboard">Басты бет</span></button>
+      <button class="nav-btn" onclick="showTab('categories', event)">📋 <span data-i18n="manage_categories">Бағыттар</span></button>
+      <button class="nav-btn" onclick="showTab('results', event)">📊 <span data-i18n="my_results">Нәтижелер</span></button>
+      <button class="nav-btn" onclick="showTab('pending', event)">⏳ <span data-i18n="check_results">Тексеру кезегі</span></button>
+      <button class="nav-btn" onclick="showTab('students', event)">👥 <span data-i18n="students">Оқушылар</span></button>
+    </div>
+
+    <!-- ТАБ 1: БАСТЫ БЕТ -->
+    <div id="tab-dashboard" class="tab-content active">
+      <h2>📊 <span data-i18n="statistics">Статистика</span></h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label">👥 <span data-i18n="total_students">Барлық оқушылар</span></div>
+          <div class="value" id="stat-students">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">📋 <span data-i18n="total_categories">Барлық бағыттар</span></div>
+          <div class="value" id="stat-categories">—</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="label">⏳ <span data-i18n="pending_results">Тексеруді күтуде</span></div>
+          <div class="value" id="stat-pending">—</div>
+        </div>
+        <div class="stat-card success">
+          <div class="label">✅ <span data-i18n="approved_results">Расталған</span></div>
+          <div class="value" id="stat-approved">—</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="label">❌ <span data-i18n="rejected_results">Қабылданбаған</span></div>
+          <div class="value" id="stat-rejected">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ТАБ 2: БАҒЫТТАР -->
+    <div id="tab-categories" class="tab-content">
+      <h2>📋 <span data-i18n="manage_categories">Бағыттарды басқару</span></h2>
+
+      <div class="add-category-form">
+        <input type="text" id="newCatName" data-i18n-placeholder="category_name" placeholder="Бағыт атауы" required>
+        <input type="text" id="newCatUnit" data-i18n-placeholder="category_unit" placeholder="Өлшем (рет)" required>
+        <select id="newCatSort">
+          <option value="DESC" data-i18n="sort_desc">Көп = жақсы</option>
+          <option value="ASC" data-i18n="sort_asc">Аз = жақсы (уақыт)</option>
+        </select>
+        <button onclick="addCategory()">➕ <span data-i18n="add">Қосу</span></button>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th data-i18n="category_name">Атауы</th>
+              <th data-i18n="category_unit">Өлшем</th>
+              <th data-i18n="category_sort">Реттілік</th>
+              <th data-i18n="status">Мәртебе</th>
+              <th data-i18n="actions">Әрекет</th>
+            </tr>
+          </thead>
+          <tbody id="categoriesTable">
+            <tr><td colspan="6" class="empty-state" data-i18n="loading">Жүктелуде...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ТАБ 3: НӘТИЖЕЛЕР -->
+    <div id="tab-results" class="tab-content">
+      <h2>📊 <span data-i18n="my_results">Нәтижелер</span></h2>
+      <p style="color:#718096; font-size:14px; margin-bottom:20px;">
+        Әр бағыт бойынша барлық оқушылардың нәтижелері
+      </p>
+
+      <div id="allInnerTabs" class="inner-tabs"></div>
+      <div id="allInnerContents"></div>
+    </div>
+
+    <!-- ТАБ 4: ТЕКСЕРУ КЕЗЕГІ -->
+    <div id="tab-pending" class="tab-content">
+      <h2>⏳ <span data-i18n="check_results">Тексеру кезегі</span></h2>
+      <div id="pendingList">
+        <div class="empty-state" data-i18n="loading">Жүктелуде...</div>
+      </div>
+    </div>
+
+    <!-- ТАБ 5: ОҚУШЫЛАР -->
+    <div id="tab-students" class="tab-content">
+      <h2>👥 <span data-i18n="students">Оқушылар</span></h2>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th data-i18n="full_name">Аты-жөні</th>
+              <th data-i18n="class">Сыныбы</th>
+              <th data-i18n="phone">Телефон</th>
+              <th data-i18n="weight">Салмағы</th>
+              <th data-i18n="height">Бойы</th>
+              <th data-i18n="actions">Әрекет</th>
+            </tr>
+          </thead>
+          <tbody id="studentsTable">
+            <tr><td colspan="7" class="empty-state" data-i18n="loading">Жүктелуде...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/js/i18n.js"></script>
+
+  <script>
+    const API = '/api';
+    let currentUser = null;
+
+    function showAlert(message, type = 'error') {
+      const alertBox = document.getElementById('alert');
+      alertBox.textContent = message;
+      alertBox.className = 'alert show alert-' + type;
+      setTimeout(() => alertBox.classList.remove('show'), 4000);
+    }
+
+    function getToken() {
+      return localStorage.getItem('token');
+    }
+
+    async function apiCall(endpoint, options = {}) {
+      const token = getToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: 'Bearer ' + token }),
+        ...options.headers
+      };
+
+      const response = await fetch(API + endpoint, { ...options, headers });
+
+      if (response.status === 401 || response.status === 403) {
+        logout();
+        throw new Error('Unauthorized');
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Server error');
+      }
+      return data;
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login.html';
+    }
+
+    function showTab(tabName, ev) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+      if (ev && ev.target) {
+        ev.target.classList.add('active');
+      }
+
+      if (tabName === 'dashboard') loadStats();
+      if (tabName === 'categories') loadCategories();
+      if (tabName === 'results') loadAllResults();
+      if (tabName === 'pending') loadPending();
+      if (tabName === 'students') loadStudents();
+    }
+
+    function switchAllInnerTab(idx) {
+      document.querySelectorAll('#allInnerTabs .inner-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('#allInnerContents .inner-content').forEach(c => c.classList.remove('active'));
+
+      const tab = document.querySelector(`#allInnerTabs .inner-tab[data-cat="${idx}"]`);
+      const content = document.getElementById('all-inner-' + idx);
+      if (tab) tab.classList.add('active');
+      if (content) content.classList.add('active');
+    }
+
+    async function loadStats() {
+      try {
+        const stats = await apiCall('/ranking/admin/stats');
+        document.getElementById('stat-students').textContent = stats.total_students;
+        document.getElementById('stat-categories').textContent = stats.total_categories;
+        document.getElementById('stat-pending').textContent = stats.pending;
+        document.getElementById('stat-approved').textContent = stats.approved;
+        document.getElementById('stat-rejected').textContent = stats.rejected;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadCategories() {
+      try {
+        const cats = await apiCall('/categories/all');
+        const tbody = document.getElementById('categoriesTable');
+        if (cats.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${t('no_data')}</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = cats.map(c => `
+          <tr>
+            <td>${c.id}</td>
+            <td><strong>${c.name}</strong></td>
+            <td>${c.unit}</td>
+            <td>${c.sort_order === 'DESC' ? t('sort_desc') : t('sort_asc')}</td>
+            <td>${c.is_active ? '✅' : '❌'}</td>
+            <td>
+              <button class="btn-action btn-reject" onclick="deleteCategory(${c.id})">🗑️ ${t('delete')}</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    async function addCategory() {
+      const name = document.getElementById('newCatName').value.trim();
+      const unit = document.getElementById('newCatUnit').value.trim();
+      const sort_order = document.getElementById('newCatSort').value;
+
+      if (!name || !unit) {
+        showAlert(t('msg_field_required'), 'error');
+        return;
+      }
+
+      try {
+        await apiCall('/categories', {
+          method: 'POST',
+          body: JSON.stringify({ name, unit, sort_order })
+        });
+        document.getElementById('newCatName').value = '';
+        document.getElementById('newCatUnit').value = '';
+        showAlert(t('success'), 'success');
+        loadCategories();
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    async function deleteCategory(id) {
+      if (!confirm(t('confirm_delete'))) return;
+      try {
+        await apiCall('/categories/' + id, { method: 'DELETE' });
+        loadCategories();
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    async function loadAllResults() {
+      try {
+        const results = await apiCall('/results/all');
+        const tabsContainer = document.getElementById('allInnerTabs');
+        const contentsContainer = document.getElementById('allInnerContents');
+
+        if (results.length === 0) {
+          tabsContainer.innerHTML = '';
+          contentsContainer.innerHTML = `
+            <div class="empty-state">
+              <div class="icon">📋</div>
+              <div>${t('no_data')}</div>
+            </div>
+          `;
+          return;
+        }
+
+        const grouped = {};
+        results.forEach(r => {
+          const key = r.category_id;
+          if (!grouped[key]) {
+            grouped[key] = {
+              id: r.category_id,
+              name: r.category_name,
+              unit: r.unit,
+              results: []
+            };
+          }
+          grouped[key].results.push(r);
+        });
+
+        const catKeys = Object.keys(grouped);
+        tabsContainer.innerHTML = catKeys.map((key, idx) => {
+          const cat = grouped[key];
+          return `
+            <button class="inner-tab ${idx === 0 ? 'active' : ''}" 
+                    data-cat="${idx}" 
+                    onclick="switchAllInnerTab(${idx})">
+              🏆 ${cat.name}
+              <span class="count">${cat.results.length}</span>
+            </button>
+          `;
+        }).join('');
+
+        contentsContainer.innerHTML = catKeys.map((key, idx) => {
+          const cat = grouped[key];
+          return `
+            <div class="inner-content ${idx === 0 ? 'active' : ''}" id="all-inner-${idx}">
+              <h3 style="margin-bottom:16px; color:#4a5568;">
+                🏆 ${cat.name} <span style="color:#718096; font-weight:400; font-size:14px;">(${cat.unit})</span>
+              </h3>
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:50px;">#</th>
+                      <th data-i18n="full_name">Аты-жөні</th>
+                      <th data-i18n="class">Сыныбы</th>
+                      <th data-i18n="phone">Телефон</th>
+                      <th>⚖️</th>
+                      <th>📏</th>
+                      <th data-i18n="result_value">Нәтиже</th>
+                      <th data-i18n="status">Мәртебе</th>
+                      <th>🎥</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${cat.results.map((r, i) => {
+                      const statusEmoji = r.status === 'approved' ? '✅' : r.status === 'pending' ? '⏳' : '❌';
+                      const statusLabel = r.status === 'approved' ? t('status_approved') 
+                                       : r.status === 'pending' ? t('status_pending') 
+                                       : t('status_rejected');
+                      const rowBg = r.status === 'approved' ? '#f0fff4' 
+                                  : r.status === 'pending' ? '#fffaf0' 
+                                  : '#fff5f5';
+                      return `
+                        <tr style="background:${rowBg};">
+                          <td><strong>${i + 1}</strong></td>
+                          <td>${r.full_name}</td>
+                          <td>${r.class}</td>
+                          <td>${r.phone || '—'}</td>
+                          <td>${r.weight || '—'}</td>
+                          <td>${r.height || '—'}</td>
+                          <td><strong style="color:#3182ce; font-size:16px;">${r.value}</strong></td>
+                          <td>${statusEmoji} ${statusLabel}</td>
+                          <td>
+                            <a href="${r.video_url}" target="_blank" class="video-link" title="${t('watch_video')}">🎥</a>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    async function loadPending() {
+      try {
+        const items = await apiCall('/results/pending');
+        const container = document.getElementById('pendingList');
+
+        if (items.length === 0) {
+          container.innerHTML = `<div class="empty-state"><div class="icon">✅</div><div>${t('no_data')}</div></div>`;
+          return;
+        }
+
+        container.innerHTML = items.map(item => `
+          <div style="background:#f7fafc; padding:16px; border-radius:12px; margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+              <div>
+                <div style="font-weight:700; font-size:16px;">👤 ${item.full_name} <span style="color:#718096; font-weight:400;">(${item.class})</span></div>
+                <div style="color:#4a5568; font-size:14px; margin-top:4px;">
+                  🏆 <strong>${item.category_name}</strong>: ${item.value} ${item.unit}
+                </div>
+                <div style="color:#718096; font-size:12px; margin-top:4px;">
+                  📞 ${item.phone || '—'} | ⚖️ ${item.weight || '—'} кг | 📏 ${item.height || '—'} см
+                </div>
+                <div style="margin-top:8px;">
+                  <a href="${item.video_url}" target="_blank" class="video-link">🎥 ${t('watch_video')}</a>
+                </div>
+              </div>
+              <div>
+                <button class="btn-action btn-approve" onclick="approveResult(${item.id})">✅ ${t('approve')}</button>
+                <button class="btn-action btn-reject" onclick="rejectResult(${item.id})">❌ ${t('reject')}</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    async function approveResult(id) {
+      if (!confirm(t('approve_confirm'))) return;
+      try {
+        await apiCall('/results/' + id + '/approve', { method: 'PUT' });
+        showAlert(t('success'), 'success');
+        loadPending();
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    async function rejectResult(id) {
+      const reason = prompt(t('reject_reason'));
+      if (reason === null) return;
+
+      try {
+        await apiCall('/results/' + id + '/reject', {
+          method: 'PUT',
+          body: JSON.stringify({ comment: reason || '' })
+        });
+        showAlert(t('success'), 'success');
+        loadPending();
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    async function loadStudents() {
+      try {
+        const students = await apiCall('/auth/students/all');
+        const tbody = document.getElementById('studentsTable');
+
+        if (students.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="empty-state">${t('no_data')}</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = students.map(s => `
+          <tr>
+            <td>${s.id}</td>
+            <td><strong>${s.full_name}</strong></td>
+            <td>${s.class}</td>
+            <td>${s.phone || '—'}</td>
+            <td>${s.weight || '—'}</td>
+            <td>${s.height || '—'}</td>
+            <td>
+              <button class="btn-action btn-view" onclick="viewStudent(${s.id})">👁️ ${t('edit')}</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+        showAlert(err.message, 'error');
+      }
+    }
+
+    async function viewStudent(id) {
+      try {
+        const s = await apiCall('/auth/students/' + id);
+
+        const oldModal = document.getElementById('studentModal');
+        if (oldModal) oldModal.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'studentModal';
+        modal.className = 'modal-overlay';
+
+        modal.innerHTML = `
+          <div class="modal-box">
+            <h2>👤 ${s.full_name}</h2>
+
+            <div class="info-row">
+              <strong>🏫 ${t('class')}:</strong> ${s.class}
+            </div>
+            <div class="info-row">
+              <strong>📞 ${t('phone')}:</strong> ${s.phone || '—'}
+            </div>
+            <div class="info-row">
+              <strong>⚖️ ${t('weight')}:</strong> ${s.weight || '—'} кг
+            </div>
+            <div class="info-row">
+              <strong>📏 ${t('height')}:</strong> ${s.height || '—'} см
+            </div>
+            <div class="info-row">
+              <strong>🔐 Login:</strong> ${s.login}
+            </div>
+
+            <div class="password-box">
+              <h3>🔑 ${t('password_field')}</h3>
+              <p style="font-size:12px; color:#975a16; margin:0 0 8px 0;">
+                Жаңа құпиясөз енгізіп, өзгертіңіз
+              </p>
+              <input 
+                type="text" 
+                id="newPassword" 
+                placeholder="Жаңа құпиясөз (кемінде 4 таңба)"
+                autocomplete="off"
+              >
+              <button class="btn-full btn-green" onclick="changePassword(${s.id})">
+                🔄 ${t('save')}
+              </button>
+            </div>
+
+            <button class="btn-full btn-gray" onclick="closeStudentModal()">
+              ❌ ${t('close')}
+            </button>
+          </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeStudentModal();
+        });
+
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    function closeStudentModal() {
+      const modal = document.getElementById('studentModal');
+      if (modal) modal.remove();
+    }
+
+    async function changePassword(studentId) {
+      const input = document.getElementById('newPassword');
+      const newPassword = input.value.trim();
+
+      if (!newPassword || newPassword.length < 4) {
+        alert(t('msg_password_short'));
+        return;
+      }
+
+      if (!confirm(`Жаңа құпиясөз: "${newPassword}"\n\nРастайсыз ба?`)) return;
+
+      try {
+        const result = await apiCall('/auth/students/' + studentId + '/password', {
+          method: 'PUT',
+          body: JSON.stringify({ new_password: newPassword })
+        });
+
+        alert(`✅ Құпиясөз өзгертілді!\n\nЖаңа құпиясөз: "${result.new_password}"\n\nОқушыға айтыңыз!`);
+        closeStudentModal();
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const token = getToken();
+      const userStr = localStorage.getItem('user');
+
+      if (!token || !userStr) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      try {
+        currentUser = JSON.parse(userStr);
+        if (currentUser.role !== 'admin') {
+          window.location.href = '/student.html';
+          return;
+        }
+        document.getElementById('adminName').textContent = '👤 ' + currentUser.full_name;
+        loadStats();
+      } catch (e) {
+        logout();
+      }
+    });
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('✅ SW тіркелді'))
+          .catch(err => console.error('❌ SW қатесі:', err));
+      });
+    }
+  </script>
+
+</body>
+</html>

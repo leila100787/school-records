@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="kz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Кіру / Вход</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#3182ce">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Рекордтар">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <div class="lang-switcher">
+    <button class="lang-btn" data-lang-btn="kz" onclick="setLang('kz')" title="Қазақша">🇰🇿</button>
+    <button class="lang-btn" data-lang-btn="ru" onclick="setLang('ru')" title="Русский">🇷🇺</button>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h1 data-i18n="app_name">Мектеп Рекордтары</h1>
+      <p class="subtitle" data-i18n="login_title">Жүйеге кіру</p>
+
+      <div id="alert" class="alert"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="login" data-i18n="login_field">Логин</label>
+          <input 
+            type="text" 
+            id="login" 
+            name="login" 
+            data-i18n-placeholder="login_placeholder"
+            placeholder="Логин" 
+            required
+            autocomplete="username"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password" data-i18n="password_field">Құпиясөз</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            data-i18n-placeholder="password_placeholder"
+            placeholder="Құпиясөз" 
+            required
+            autocomplete="current-password"
+          >
+        </div>
+
+        <button type="submit" class="btn btn-primary" data-i18n="login_button">
+          Кіру
+        </button>
+      </form>
+
+      <p class="text-center">
+        <span data-i18n="no_account">Аккаунтыңыз жоқ па?</span>
+        <a href="/register.html" class="link" data-i18n="register_link">Тіркелу</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="/js/i18n.js"></script>
+
+  <script>
+    const API_URL = '/api/auth/login';
+    const form = document.getElementById('loginForm');
+    const alertBox = document.getElementById('alert');
+
+    function showAlert(messageKey, type = 'error') {
+      alertBox.textContent = t(messageKey);
+      alertBox.className = 'alert show alert-' + type;
+      setTimeout(() => alertBox.classList.remove('show'), 5000);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const login = document.getElementById('login').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!login || !password) {
+        showAlert('msg_field_required', 'error');
+        return;
+      }
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = t('loading');
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ login, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            showAlert('msg_login_error', 'error');
+          } else {
+            alertBox.textContent = data.error || t('msg_server_error');
+            alertBox.className = 'alert show alert-error';
+          }
+          submitBtn.disabled = false;
+          submitBtn.textContent = t('login_button');
+          return;
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        if (data.user.role === 'admin') {
+          window.location.href = '/admin.html';
+        } else {
+          window.location.href = '/student.html';
+        }
+
+      } catch (err) {
+        console.error(err);
+        showAlert('msg_network_error', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = t('login_button');
+      }
+    });
+
+    // Автоматты кіру
+    window.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      
+      if (token && userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user.role === 'admin') {
+            window.location.href = '/admin.html';
+          } else {
+            window.location.href = '/student.html';
+          }
+        } catch (e) {}
+      }
+    });
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('✅ SW тіркелді'))
+          .catch(err => console.error('❌ SW қатесі:', err));
+      });
+    }
+  </script>
+
+</body>
+</html>

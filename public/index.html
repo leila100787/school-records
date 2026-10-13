@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="kz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Мектеп Рекордтары / Школьные Рекорды</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#3182ce">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Рекордтар">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .hero {
+      background: white;
+      border-radius: 24px;
+      padding: 48px 32px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero-logo {
+      font-size: 80px;
+      margin-bottom: 16px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .hero h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+      color: #1a202c;
+      font-weight: 700;
+    }
+
+    .hero .subtitle {
+      color: #718096;
+      font-size: 16px;
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    .hero-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .btn-hero {
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: block;
+      font-family: inherit;
+      border: none;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .btn-hero-primary {
+      background: #3182ce;
+      color: white;
+    }
+
+    .btn-hero-primary:hover {
+      background: #2c5282;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(49, 130, 206, 0.4);
+    }
+
+    .btn-hero-secondary {
+      background: #edf2f7;
+      color: #4a5568;
+    }
+
+    .btn-hero-secondary:hover {
+      background: #e2e8f0;
+      transform: translateY(-2px);
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .feature {
+      text-align: center;
+      font-size: 13px;
+      color: #4a5568;
+    }
+
+    .feature .icon {
+      font-size: 28px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 480px) {
+      .hero {
+        padding: 32px 20px;
+      }
+      .hero h1 {
+        font-size: 26px;
+      }
+      .hero-logo {
+        font-size: 64px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="lang-switcher">
+    <button class="lang-btn" data-lang-btn="kz" onclick="setLang('kz')" title="Қазақша">🇰🇿</button>
+    <button class="lang-btn" data-lang-btn="ru" onclick="setLang('ru')" title="Русский">🇷🇺</button>
+  </div>
+
+  <div class="hero">
+    <div class="hero-logo">🏆</div>
+    <h1 data-i18n="app_name">Мектеп Рекордтары</h1>
+    <p class="subtitle" data-i18n="app_subtitle">
+      Бастауыш сынып оқушыларының жетістіктері
+    </p>
+
+    <div class="hero-buttons">
+      <a href="/login.html" class="btn-hero btn-hero-primary" data-i18n="login">
+        Кіру
+      </a>
+      <a href="/register.html" class="btn-hero btn-hero-secondary" data-i18n="register">
+        Тіркелу
+      </a>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <span class="icon">🏃</span>
+        <span data-i18n="cat_jump_rope">Скакалка секіру</span>
+      </div>
+      <div class="feature">
+        <span class="icon">💪</span>
+        <span data-i18n="cat_pushups">Отжимание</span>
+      </div>
+      <div class="feature">
+        <span class="icon">🤸</span>
+        <span data-i18n="cat_pullups">Турникке тартылу</span>
+      </div>
+      <div class="feature">
+        <span class="icon">🥇</span>
+        <span data-i18n="ranking">Рейтинг</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/i18n.js"></script>
+
+  <script>
+    // Автоматты кіру — егер пайдаланушы бұрын кірген болса
+    window.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+
+      if (token && userStr) {
+        fetch('/api/auth/me', {
+          headers: { Authorization: 'Bearer ' + token }
+        })
+        .then(res => {
+          if (res.ok) {
+            const user = JSON.parse(userStr);
+            if (user.role === 'admin') {
+              window.location.href = '/admin.html';
+            } else {
+              window.location.href = '/student.html';
+            }
+          }
+        })
+        .catch(() => {
+          // Токен жарамсыз — ештеңе істемейміз
+        });
+      }
+    });
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('✅ Service Worker тіркелді:', reg.scope))
+          .catch(err => console.error('❌ Service Worker қатесі:', err));
+      });
+    }
+
+    // Орнату батырмасы
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      showInstallButton();
+    });
+
+    function showInstallButton() {
+      if (document.getElementById('pwa-install-btn')) return;
+
+      const btn = document.createElement('button');
+      btn.id = 'pwa-install-btn';
+      btn.innerHTML = '📲 Қосымшаны орнату';
+      btn.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 14px 24px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        z-index: 9999;
+        font-family: inherit;
+        animation: pulse 2s infinite;
+      `;
+
+      btn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          btn.remove();
+        }
+        deferredPrompt = null;
+      });
+
+      document.body.appendChild(btn);
+
+      setTimeout(() => {
+        if (btn.parentNode) btn.remove();
+      }, 15000);
+    }
+
+    // Pulse анимация
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes pulse {
+        0%, 100% { transform: translateX(-50%) scale(1); }
+        50% { transform: translateX(-50%) scale(1.05); }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+
+</body>
+</html>

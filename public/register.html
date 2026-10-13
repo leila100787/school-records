@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="kz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тіркелу / Регистрация</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#3182ce">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Рекордтар">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <div class="lang-switcher">
+    <button class="lang-btn" data-lang-btn="kz" onclick="setLang('kz')" title="Қазақша">🇰🇿</button>
+    <button class="lang-btn" data-lang-btn="ru" onclick="setLang('ru')" title="Русский">🇷🇺</button>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h1 data-i18n="app_name">Мектеп Рекордтары</h1>
+      <p class="subtitle" data-i18n="register_title">Тіркелу</p>
+
+      <div id="alert" class="alert"></div>
+
+      <form id="registerForm">
+        <div class="form-group">
+          <label for="full_name" data-i18n="full_name">Аты-жөні</label>
+          <input 
+            type="text" 
+            id="full_name" 
+            name="full_name" 
+            data-i18n-placeholder="full_name_placeholder"
+            placeholder="Мысалы: Айдар Сериков" 
+            required
+            maxlength="100"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="class" data-i18n="class">Сыныбы</label>
+          <input 
+            type="text" 
+            id="class" 
+            name="class" 
+            data-i18n-placeholder="class_placeholder"
+            placeholder="Мысалы: 3А" 
+            required
+            maxlength="10"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="phone" data-i18n="phone">Телефон нөмірі</label>
+          <input 
+            type="tel" 
+            id="phone" 
+            name="phone" 
+            data-i18n-placeholder="phone_placeholder"
+            placeholder="87001234567"
+            maxlength="15"
+          >
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="weight" data-i18n="weight">Салмағы (кг)</label>
+            <input 
+              type="number" 
+              id="weight" 
+              name="weight" 
+              placeholder="32"
+              min="10"
+              max="200"
+              step="0.1"
+            >
+          </div>
+          <div class="form-group">
+            <label for="height" data-i18n="height">Бойы (см)</label>
+            <input 
+              type="number" 
+              id="height" 
+              name="height" 
+              placeholder="135"
+              min="80"
+              max="220"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="login" data-i18n="login_field">Логин</label>
+          <input 
+            type="text" 
+            id="login" 
+            name="login" 
+            data-i18n-placeholder="login_field_placeholder"
+            placeholder="Логин (ағылшын әріптері)" 
+            required
+            minlength="3"
+            maxlength="30"
+            pattern="[a-zA-Z0-9_]+"
+            autocomplete="username"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password" data-i18n="password_field">Құпиясөз</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            data-i18n-placeholder="password_field_placeholder"
+            placeholder="Кемінде 4 таңба" 
+            required
+            minlength="4"
+            autocomplete="new-password"
+          >
+        </div>
+
+        <button type="submit" class="btn btn-primary" data-i18n="register_button">
+          Тіркелу
+        </button>
+      </form>
+
+      <p class="text-center">
+        <span data-i18n="have_account">Аккаунтыңыз бар ма?</span>
+        <a href="/login.html" class="link" data-i18n="login_link">Кіру</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="/js/i18n.js"></script>
+
+  <script>
+    const API_URL = '/api/auth/register';
+    const form = document.getElementById('registerForm');
+    const alertBox = document.getElementById('alert');
+
+    function showAlert(message, type = 'error') {
+      alertBox.textContent = message;
+      alertBox.className = 'alert show alert-' + type;
+      setTimeout(() => alertBox.classList.remove('show'), 5000);
+    }
+
+    function showAlertT(key, type = 'error') {
+      showAlert(t(key), type);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const full_name = document.getElementById('full_name').value.trim();
+      const studentClass = document.getElementById('class').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const weight = document.getElementById('weight').value;
+      const height = document.getElementById('height').value;
+      const login = document.getElementById('login').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!full_name || !studentClass || !login || !password) {
+        showAlertT('msg_field_required', 'error');
+        return;
+      }
+
+      if (password.length < 4) {
+        showAlertT('msg_password_short', 'error');
+        return;
+      }
+
+      if (!/^[a-zA-Z0-9_]+$/.test(login)) {
+        showAlert(t('login_field_placeholder'), 'error');
+        return;
+      }
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = t('loading');
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name,
+            class: studentClass,
+            phone: phone || null,
+            weight: weight ? parseFloat(weight) : null,
+            height: height ? parseFloat(height) : null,
+            login,
+            password
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          if (response.status === 400 && data.error) {
+            if (data.error.includes('логин') || data.error.includes('Логин')) {
+              showAlertT('msg_login_taken', 'error');
+            } else {
+              showAlert(data.error, 'error');
+            }
+          } else {
+            showAlert(data.error || t('msg_server_error'), 'error');
+          }
+          submitBtn.disabled = false;
+          submitBtn.textContent = t('register_button');
+          return;
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        showAlertT('msg_register_success', 'success');
+
+        setTimeout(() => {
+          window.location.href = '/student.html';
+        }, 1000);
+
+      } catch (err) {
+        console.error(err);
+        showAlertT('msg_network_error', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = t('register_button');
+      }
+    });
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('✅ SW тіркелді'))
+          .catch(err => console.error('❌ SW қатесі:', err));
+      });
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="kz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Оқушы панелі / Панель ученика</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#3182ce">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Рекордтар">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { background: #f0f4f8; }
+
+    .student-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .student-header {
+      background: white;
+      padding: 16px 24px;
+      border-radius: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+      margin-top: 60px;
+    }
+
+    .student-header h1 {
+      font-size: 20px;
+      margin: 0;
+      text-align: left;
+    }
+
+    .student-header .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: #4a5568;
+    }
+
+    .btn-logout {
+      background: #e53e3e;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn-logout:hover { background: #c53030; }
+
+    .student-nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      background: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: #4a5568;
+      transition: all 0.2s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .nav-btn:hover { background: #edf2f7; }
+    .nav-btn.active { background: #3182ce; color: white; }
+
+    .tab-content {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      display: none;
+    }
+
+    .tab-content.active { display: block; }
+
+    .inner-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .inner-tab {
+      background: #f7fafc;
+      border: 2px solid #e2e8f0;
+      padding: 10px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: #4a5568;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .inner-tab:hover {
+      background: #edf2f7;
+      border-color: #cbd5e0;
+    }
+
+    .inner-tab.active {
+      background: #3182ce;
+      color: white;
+      border-color: #3182ce;
+    }
+
+    .inner-tab .count {
+      background: rgba(255,255,255,0.3);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+
+    .inner-tab:not(.active) .count {
+      background: #3182ce;
+      color: white;
+    }
+
+    .inner-content { display: none; }
+
+    .inner-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-group { margin-bottom: 16px; }
+
+    .info-box {
+      background: #ebf8ff;
+      border-left: 4px solid #3182ce;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: #2c5282;
+    }
+
+    .result-card {
+      background: #f7fafc;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      border-left: 4px solid #cbd5e0;
+    }
+
+    .result-card.approved { border-left-color: #38a169; background: #f0fff4; }
+    .result-card.rejected { border-left-color: #e53e3e; background: #fff5f5; }
+    .result-card.pending { border-left-color: #d69e2e; background: #fffaf0; }
+
+    .result-card .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .result-card .cat-name { font-weight: 700; font-size: 16px; }
+    .result-card .value { font-size: 20px; font-weight: 700; color: #3182ce; }
+
+    .table-wrapper { overflow-x: auto; }
+
+    .rank-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .rank-table th {
+      background: #edf2f7;
+      padding: 12px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4a5568;
+    }
+
+    .rank-table td {
+      padding: 12px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 14px;
+    }
+
+    .rank-table tr.rank-1 { background: #fefcbf; font-weight: 700; }
+    .rank-table tr.rank-2 { background: #e2e8f0; }
+    .rank-table tr.rank-3 { background: #fed7aa; }
+
+    .medal { font-size: 20px; }
+
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .cat-btn {
+      background: white;
+      border: 2px solid #e2e8f0;
+      padding: 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .cat-btn:hover { border-color: #3182ce; }
+    .cat-btn.active {
+      border-color: #3182ce;
+      background: #ebf8ff;
+    }
+
+    .cat-btn .name { font-weight: 700; font-size: 15px; color: #1a202c; }
+    .cat-btn .unit { font-size: 13px; color: #718096; margin-top: 4px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #a0aec0;
+    }
+
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+    @media (max-width: 768px) {
+      .student-header {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+      }
+      .student-header h1 { text-align: center; }
+      .student-nav { justify-content: center; }
+      .inner-tabs { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="lang-switcher">
+    <button class="lang-btn" data-lang-btn="kz" onclick="setLang('kz')" title="Қазақша">🇰🇿</button>
+    <button class="lang-btn" data-lang-btn="ru" onclick="setLang('ru')" title="Русский">🇷🇺</button>
+  </div>
+
+  <div class="student-container">
+
+    <div class="student-header">
+      <h1>👨‍🎓 <span data-i18n="student_panel">Оқушы панелі</span></h1>
+      <div class="user-info">
+        <span id="studentName"></span>
+        <button class="btn-logout" onclick="logout()">🚪 <span data-i18n="logout">Шығу</span></button>
+      </div>
+    </div>
+
+    <div id="alert" class="alert"></div>
+
+    <div class="student-nav">
+      <button class="nav-btn active" onclick="showTab('submit', event)">📝 <span data-i18n="submit_result">Нәтиже жіберу</span></button>
+      <button class="nav-btn" onclick="showTab('my', event)">📊 <span data-i18n="my_results">Нәтижелер</span></button>
+      <button class="nav-btn" onclick="showTab('ranking', event)">🏆 <span data-i18n="ranking">Рейтинг</span></button>
+    </div>
+
+    <!-- ТАБ 1: НӘТИЖЕ ЖІБЕРУ -->
+    <div id="tab-submit" class="tab-content active">
+      <h2>📝 <span data-i18n="submit_result">Нәтиже жіберу</span></h2>
+
+      <div id="step1">
+        <label style="display:block; margin-bottom:12px; font-weight:600;" data-i18n="choose_category">
+          Бағытты таңдаңыз:
+        </label>
+        <div id="catGrid" class="cat-grid">
+          <div class="empty-state" data-i18n="loading">Жүктелуде...</div>
+        </div>
+      </div>
+
+      <div id="step2" style="display:none;">
+        <div style="background:#ebf8ff; padding:12px 16px; border-radius:8px; margin-bottom:16px;">
+          <strong id="selectedCatLabel"></strong>
+          <button onclick="resetForm()" style="float:right; background:none; border:none; cursor:pointer; color:#3182ce; font-weight:600;">
+            ✖
+          </button>
+        </div>
+
+        <form id="resultForm">
+          <div class="form-group">
+            <label for="value" data-i18n="enter_result">Нәтижені енгізіңіз</label>
+            <input type="number" id="value" step="0.01" min="0" required>
+          </div>
+
+          <div class="form-group">
+            <label for="video_url" data-i18n="video_link">Видео сілтемесі (Google Drive)</label>
+            <input type="url" id="video_url" required>
+          </div>
+
+          <div class="info-box">
+            💡 <span data-i18n="video_link_help">Видеоны Google Drive-ке жүктеп, сілтемесін осында қойыңыз</span>
+          </div>
+
+          <button type="submit" class="btn btn-primary" data-i18n="submit">Жіберу</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ТАБ 2: МЕНІҢ НӘТИЖЕЛЕРІМ -->
+    <div id="tab-my" class="tab-content">
+      <h2>📊 <span data-i18n="my_results">Менің нәтижелерім</span></h2>
+
+      <div id="innerTabs" class="inner-tabs"></div>
+      <div id="innerContents"></div>
+    </div>
+
+    <!-- ТАБ 3: РЕЙТИНГ -->
+    <div id="tab-ranking" class="tab-content">
+      <h2>🏆 <span data-i18n="ranking">Рейтинг кестесі</span></h2>
+      <div id="rankingList">
+        <div class="empty-state" data-i18n="loading">Жүктелуде...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/js/i18n.js"></script>
+
+  <script>
+    const API = '/api';
+    let currentUser = null;
+    let categories = [];
+    let selectedCategory = null;
+
+    function showAlert(message, type = 'error') {
+      const alertBox = document.getElementById('alert');
+      alertBox.textContent = message;
+      alertBox.className = 'alert show alert-' + type;
+      setTimeout(() => alertBox.classList.remove('show'), 4000);
+    }
+
+    function getToken() {
+      return localStorage.getItem('token');
+    }
+
+    async function apiCall(endpoint, options = {}) {
+      const token = getToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: 'Bearer ' + token }),
+        ...options.headers
+      };
+
+      const response = await fetch(API + endpoint, { ...options, headers });
+
+      if (response.status === 401 || response.status === 403) {
+        logout();
+        throw new Error('Unauthorized');
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Server error');
+      }
+      return data;
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login.html';
+    }
+
+    function showTab(tabName, ev) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+      if (ev && ev.target) {
+        ev.target.classList.add('active');
+      }
+
+      if (tabName === 'submit') loadCategories();
+      if (tabName === 'my') loadMyResults();
+      if (tabName === 'ranking') loadRanking();
+    }
+
+    function switchInnerTab(catId) {
+      document.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.inner-content').forEach(c => c.classList.remove('active'));
+
+      const tab = document.querySelector(`.inner-tab[data-cat="${catId}"]`);
+      const content = document.getElementById('inner-' + catId);
+      if (tab) tab.classList.add('active');
+      if (content) content.classList.add('active');
+    }
+
+    async function loadCategories() {
+      try {
+        categories = await apiCall('/categories');
+        const grid = document.getElementById('catGrid');
+
+        if (categories.length === 0) {
+          grid.innerHTML = `<div class="empty-state">${t('no_data')}</div>`;
+          return;
+        }
+
+        grid.innerHTML = categories.map(c => `
+          <button class="cat-btn" onclick="selectCategory(${c.id}, event)">
+            <div class="name">🏆 ${c.name}</div>
+            <div class="unit">${c.unit}</div>
+          </button>
+        `).join('');
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    function selectCategory(id, ev) {
+      selectedCategory = categories.find(c => c.id === id);
+      if (!selectedCategory) return;
+
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      if (ev && ev.target) ev.target.closest('.cat-btn').classList.add('active');
+
+      document.getElementById('selectedCatLabel').textContent =
+        '🏆 ' + selectedCategory.name + ' (' + selectedCategory.unit + ')';
+      document.getElementById('step1').style.display = 'none';
+      document.getElementById('step2').style.display = 'block';
+    }
+
+    function resetForm() {
+      selectedCategory = null;
+      document.getElementById('step1').style.display = 'block';
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('resultForm').reset();
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    }
+
+    document.getElementById('resultForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!selectedCategory) {
+        showAlert(t('choose_category'), 'error');
+        return;
+      }
+
+      const value = document.getElementById('value').value;
+      const video_url = document.getElementById('video_url').value.trim();
+
+      if (!value || !video_url) {
+        showAlert(t('msg_field_required'), 'error');
+        return;
+      }
+
+      try {
+        await apiCall('/results', {
+          method: 'POST',
+          body: JSON.stringify({
+            category_id: selectedCategory.id,
+            value: parseFloat(value),
+            video_url
+          })
+        });
+
+        showAlert(t('success'), 'success');
+        resetForm();
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    });
+
+    async function loadMyResults() {
+      try {
+        const results = await apiCall('/results/my');
+        const tabsContainer = document.getElementById('innerTabs');
+        const contentsContainer = document.getElementById('innerContents');
+
+        if (results.length === 0) {
+          tabsContainer.innerHTML = '';
+          contentsContainer.innerHTML = `
+            <div class="empty-state">
+              <div class="icon">📋</div>
+              <div>${t('no_results')}</div>
+            </div>
+          `;
+          return;
+        }
+
+        const grouped = {};
+        results.forEach(r => {
+          const key = r.category_name;
+          if (!grouped[key]) {
+            grouped[key] = {
+              name: r.category_name,
+              unit: r.unit,
+              results: []
+            };
+          }
+          grouped[key].results.push(r);
+        });
+
+        const catNames = Object.keys(grouped);
+        tabsContainer.innerHTML = catNames.map((name, idx) => {
+          const cat = grouped[name];
+          return `
+            <button class="inner-tab ${idx === 0 ? 'active' : ''}" 
+                    data-cat="${idx}" 
+                    onclick="switchInnerTab(${idx})">
+              🏆 ${name}
+              <span class="count">${cat.results.length}</span>
+            </button>
+          `;
+        }).join('');
+
+        const statusLabels = {
+          pending: t('status_pending'),
+          approved: t('status_approved'),
+          rejected: t('status_rejected')
+        };
+
+        contentsContainer.innerHTML = catNames.map((name, idx) => {
+          const cat = grouped[name];
+          return `
+            <div class="inner-content ${idx === 0 ? 'active' : ''}" id="inner-${idx}">
+              <h3 style="margin-bottom:16px; color:#4a5568;">
+                🏆 ${name} <span style="color:#718096; font-weight:400; font-size:14px;">(${cat.unit})</span>
+              </h3>
+              ${cat.results.map(r => `
+                <div class="result-card ${r.status}">
+                  <div class="row">
+                    <div class="cat-name">${r.category_name}</div>
+                    <div class="value">${r.value} ${r.unit}</div>
+                  </div>
+                  <div class="row">
+                    <span class="badge badge-${r.status}">${statusLabels[r.status]}</span>
+                    <a href="${r.video_url}" target="_blank" class="link">🎥 ${t('watch_video')}</a>
+                  </div>
+                  ${r.admin_comment ? `<div style="margin-top:8px; color:#c53030; font-size:13px;">💬 ${r.admin_comment}</div>` : ''}
+                  <div style="color:#a0aec0; font-size:12px; margin-top:8px;">
+                    ${new Date(r.submitted_at).toLocaleString()}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    async function loadRanking() {
+      try {
+        const rankings = await apiCall('/ranking');
+        const container = document.getElementById('rankingList');
+
+        const withResults = rankings.filter(cat => cat.results.length > 0);
+
+        if (withResults.length === 0) {
+          container.innerHTML = `<div class="empty-state">${t('no_data')}</div>`;
+          return;
+        }
+
+        const tabsHtml = withResults.map((cat, idx) => `
+          <button class="inner-tab ${idx === 0 ? 'active' : ''}" 
+                  data-cat="rank-${idx}" 
+                  onclick="switchInnerTab('rank-${idx}')">
+            🏆 ${cat.name}
+            <span class="count">${cat.results.length}</span>
+          </button>
+        `).join('');
+
+        const contentsHtml = withResults.map((cat, idx) => `
+          <div class="inner-content ${idx === 0 ? 'active' : ''}" id="inner-rank-${idx}">
+            <h3 style="margin-bottom:16px; color:#4a5568;">
+              🏆 ${cat.name} <span style="color:#718096; font-weight:400; font-size:14px;">(${cat.unit})</span>
+            </h3>
+            <div class="table-wrapper">
+              <table class="rank-table">
+                <thead>
+                  <tr>
+                    <th style="width:80px;" data-i18n="place">Орын</th>
+                    <th data-i18n="student_name">Оқушы</th>
+                    <th data-i18n="class">Сыныбы</th>
+                    <th data-i18n="result_value">Нәтиже</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${cat.results.map(r => `
+                    <tr class="rank-${r.rank <= 3 ? r.rank : ''}">
+                      <td>
+                        <span class="medal">${r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : ''}</span> 
+                        ${r.rank}
+                      </td>
+                      <td>${r.full_name}</td>
+                      <td>${r.class}</td>
+                      <td><strong>${r.value}</strong> ${cat.unit}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `).join('');
+
+        container.innerHTML = `
+          <div class="inner-tabs">${tabsHtml}</div>
+          <div>${contentsHtml}</div>
+        `;
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const token = getToken();
+      const userStr = localStorage.getItem('user');
+
+      if (!token || !userStr) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      try {
+        currentUser = JSON.parse(userStr);
+        if (currentUser.role !== 'student') {
+          window.location.href = '/admin.html';
+          return;
+        }
+        document.getElementById('studentName').textContent =
+          '👤 ' + currentUser.full_name + ' (' + currentUser.class + ')';
+        loadCategories();
+      } catch (e) {
+        logout();
+      }
+    });
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('✅ SW тіркелді'))
+          .catch(err => console.error('❌ SW қатесі:', err));
+      });
+    }
+  </script>
+
+</body>
+</html>
